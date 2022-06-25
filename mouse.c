@@ -1,70 +1,154 @@
+//flags -lxdo
+//args getpixelcolor
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <xdo.h>
 
-int
-main(int argc, char **argv)
-{
+xdo_t *xdo;
+charcodemap_t *mods;
+int nmods;
+
+void click(int button);
+void click_cords(int x, int y, int screen, int button);
+void move(int x, int y, int screen);
+void move_rel(int x, int y);
+void get_coords(int *x, int *y, int *screen);
+void get_pixel_color(char color[]);
+
+
+void click(int button) {
+    xdo_get_active_modifiers(xdo, &mods, &nmods);
+    xdo_clear_active_modifiers(xdo, CURRENTWINDOW, mods, nmods);
+
+    xdo_mouse_down(xdo, CURRENTWINDOW, button);
+    xdo_mouse_up(xdo, CURRENTWINDOW, button);
+
+    xdo_set_active_modifiers(xdo, CURRENTWINDOW, mods, nmods);
+}
+
+void click_cords(int x, int y, int screen, int button) {
+    xdo_get_active_modifiers(xdo, &mods, &nmods);
+    xdo_clear_active_modifiers(xdo, CURRENTWINDOW, mods, nmods);
+
+    int startX, startY, startScreen;
+    get_coords(&startX, &startY, &startScreen);
+
+    move(x, y, screen);
+    xdo_mouse_down(xdo, CURRENTWINDOW, button);
+    xdo_mouse_up(xdo, CURRENTWINDOW, button);
+    move(startX, startY, startScreen);
+
+    xdo_set_active_modifiers(xdo, CURRENTWINDOW, mods, nmods);
+}
+
+void move(int x, int y, int screen) {
+    xdo_move_mouse(xdo, x, y, screen);
+}
+
+void move_rel(int x, int y) {
+    xdo_move_mouse_relative(xdo, x, y);
+}
+
+void get_coords(int *x, int *y, int *screen) {
+    xdo_get_mouse_location(xdo, x, y, screen);
+}
+
+void get_pixel_color(char color[]) {
+    FILE *cmd = popen("eval $(xdotool getmouselocation --shell) ; xwd -root -silent | convert xwd:- -depth 8 -crop \"1x1+$X+$Y\" txt:- | grep -om1 '#\\w\\+'", "r");
+    fgets(color, 256, cmd);
+    fclose(cmd);
+}
+
+int print_help() {
+    puts("usage: mouse [click {button}] [move {x,y,screen}] [move-rel {x,y}] [get {x,y,xy}] [getpixelcolor]");
+    return 0;
+}
+
+
+int main(int argc, char **argv) {
     if (argc == 1) {
-        printf("usage: mouse [click] [move {x,y,screen}] [move-rel {x,y}] [get{x,y,xy}] [getpixelcolor]");
-        return 0;
+        print_help();
+        return 1;
     }
 
-    xdo_t *xdo = xdo_new(NULL);
-    charcodemap_t *mods;
-    int nmods;
+    xdo = xdo_new(NULL);
     char action[32];
     strcpy(action, argv[1]);
 
     if (strcmp(action, "click") == 0)
     {
-        xdo_get_active_modifiers(xdo, &mods, &nmods);
-        xdo_clear_active_modifiers(xdo, CURRENTWINDOW, mods, nmods);
-
         int button = (argc > 2) ? atoi(argv[2]) : 1;
-        xdo_mouse_down(xdo, CURRENTWINDOW, button);
-        xdo_mouse_up(xdo, CURRENTWINDOW, button);
-
-        xdo_set_active_modifiers(xdo, CURRENTWINDOW, mods, nmods);
+        click(button);
     }
+
+    else if (strcmp(action, "clickc") == 0)
+    {
+        if (argc != 4) {
+            print_help();
+            return 1;
+        }
+        int x = atoi(argv[2]);
+        int y = atoi(argv[3]);
+        int button = (argc > 4) ? atoi(argv[4]) : 1;
+        int screen = (argc > 5) ? atoi(argv[5]) : 0;
+        click_cords(x, y, screen, button);
+    }
+
     else if (strcmp(action, "move") == 0)
     {
+        if (argc != 4) {
+            print_help();
+            return 1;
+        }
         int x = atoi(argv[2]);
         int y = atoi(argv[3]);
         int screen = (argc > 4) ? atoi(argv[4]) : 0;
-        xdo_move_mouse(xdo, x, y, screen);
+        move(x, y, screen);
     }
+
     else if (strcmp(action, "move-rel") == 0)
     {
+        if (argc != 4) {
+            print_help();
+            return 1;
+        }
         int x = atoi(argv[2]);
         int y = atoi(argv[3]);
-        xdo_move_mouse_relative(xdo, x, y);
+        move_rel(x, y);
     }
-    else if (strcmp(action, "getxy") == 0)
+
+    else if (strcmp(action, "get") == 0)
     {
+        if (argc != 3) {
+            print_help();
+            return 1;
+        }
+
         int x, y, screen;
-        xdo_get_mouse_location(xdo, &x, &y, &screen);
-        printf("%d %d", x, y);
+        get_coords(&x, &y, &screen);
+
+        if (strcmp(argv[2], "x") == 0) {
+            printf("%d", x);
+        } else if (strcmp(argv[2], "y") == 0) {
+            printf("%d", y);
+        } else {
+            printf("%d %d", x, y);
+        }
     }
-    else if (strcmp(action, "getx") == 0)
-    {
-        int x, y, screen;
-        xdo_get_mouse_location(xdo, &x, &y, &screen);
-        printf("%d", x);
-    }
-    else if (strcmp(action, "gety") == 0)
-    {
-        int x, y, screen;
-        xdo_get_mouse_location(xdo, &x, &y, &screen);
-        printf("%d", y);
-    }
+
     else if (strcmp(action, "getpixelcolor") == 0)
     {
-    system("eval $(xdotool getmouselocation --shell) ; xwd -root -silent |\
-            convert xwd:- -depth 8 -crop \"1x1+$X+$Y\" txt:- | grep -om1 '#\\w\\+'");
+        char color[50];
+        get_pixel_color(color);
+        printf("%s", color);
     }
+
+    else {
+        print_help();
+        return 1;
+    }
+
     xdo_free(xdo);
-    return 0;
 }
 
