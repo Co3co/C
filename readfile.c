@@ -28,6 +28,7 @@ int main(int argc, char **argv) {
     snprintf(cmd, sizeof(cmd), "wc -l %s | awk '{print $1}'", file.name);
     FILE *fLines = popen(cmd, "r");
     fgets(file.lines, 1024, fLines);
+    fclose(cmd);
 
     FILE *pFile = fopen(file.name, "r");
     for(int i = 0; i < atoi(file.lines); i++) {
