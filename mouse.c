@@ -17,7 +17,6 @@ void get_coords(int *x, int *y, int *screen);
 void hold(int pressTime, int button);
 void drag(float ix, float iy, float tx, float ty, int speedMS, int screen, int button);
 void get_pixel_color(char color[]);
-int bigger(int val1, int val2);
 int print_help(void);
 
 void click(int button) {
