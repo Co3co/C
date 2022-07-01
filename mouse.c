@@ -15,7 +15,7 @@ void move(int x, int y, int screen);
 void move_rel(int x, int y);
 void get_coords(int *x, int *y, int *screen);
 void hold(int pressTime, int button);
-void drag(int x, int y, int targetX, int targetY, int speedMS, int screen, int button);
+void drag(float ix, float iy, float tx, float ty, int speedMS, int screen, int button);
 void get_pixel_color(char color[]);
 int bigger(int val1, int val2);
 int print_help(void);
@@ -74,11 +74,23 @@ void hold(int pressTime, int button) {
     xdo_mouse_up(xdo, CURRENTWINDOW, button);
 }
 
-void drag(int x, int y, int targetX, int targetY, int speedMS, int screen, int button) {
+void drag(float ix, float iy, float tx, float ty, int speedMS, int screen, int button) {
+    float frac, loop, loops, x, y, posdx, posdy;
+    float dx = tx - ix, dy = ty - iy;
+    if (dx < 0 || dy < 0) {
+        posdx = (dx < 0) ? dx - dx * 2 : dx;
+        posdy = (dy < 0) ? dy - dy * 2 : dy;
+        loops = (posdx < posdy) ? posdy : posdx;
+    } else {
+        loops = (dx < dy) ? dy : dx;
+    }
+
+    xdo_move_mouse(xdo, ix, iy, screen);
     xdo_mouse_down(xdo, CURRENTWINDOW, button);
-    while (x != targetX || y != targetY) {
-        y = (y < targetY) ? y + 1 : y - 1;
-        printf("%d\n", y);
+    for (loop = 1; loop <= loops; loop++) {
+        frac = loop / loops;
+        x = ix + (frac * dx);
+        y = iy + (frac * dy);
         xdo_move_mouse(xdo, x, y, screen);
         usleep(speedMS*1000);
     }
@@ -149,14 +161,14 @@ int main(int argc, char **argv) {
             print_help();
             return 1;
         }
-        int x = atoi(argv[2]);
-        int y = atoi(argv[3]);
+        int initalX = atoi(argv[2]);
+        int initalY = atoi(argv[3]);
         int targetX = atoi(argv[4]);
         int targetY = atoi(argv[5]);
         int speedMS = (argc > 6) ? atoi(argv[6]) : 1;
         int button = (argc > 7) ? atoi(argv[7]) : 1;
         int screen = (argc > 8) ? atoi(argv[8]) : 0;
-        drag(x, y, targetX, targetY, speedMS, screen, button);
+        drag(initalX, initalY, targetX, targetY, speedMS, screen, button);
     }
 
     else if (strcmp(action, "move") == 0)
