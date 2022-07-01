@@ -76,7 +76,8 @@ void hold(int pressTime, int button) {
 
 void drag(int x, int y, int targetX, int targetY, int speedMS, int screen, int button) {
     xdo_mouse_down(xdo, CURRENTWINDOW, button);
-    for (x, y; x < targetX || x > targetX && y < targetY || y > targetY;) {
+
+    for (x; x < targetX || x > targetX;) {
         x = (x < targetX) ? x + 1 : x - 1;
         y = (y < targetY) ? y + 1 : y - 1;
         printf("%d, %d\n", x, y);
@@ -86,8 +87,9 @@ void drag(int x, int y, int targetX, int targetY, int speedMS, int screen, int b
     for (y; y < targetY || y > targetY;) {
         y = (y < targetY) ? y + 1 : y - 1;
         printf("%d\n", y);
+        xdo_move_mouse(xdo, x, y, screen);
+        usleep(speedMS*1000);
     }
-    xdo_mouse_up(xdo, CURRENTWINDOW, button);
 }
 
 void get_pixel_color(char color[]) {
