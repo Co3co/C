@@ -18,9 +18,9 @@ int main(int argc, char **argv) {
     }
 
     FILE *file = fopen(fileName, "r");
-    for (buf = getc(file); buf != EOF; buf = getc(file)) {
+    while (buf != EOF) {
         printf("%c", buf);
-        fflush(stdout);
+        buf = getc(file);
     }
     fclose(file);
     return 0;
