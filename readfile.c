@@ -10,13 +10,18 @@ int main(int argc, char **argv) {
 
     char fileName[256];
     char buf;
+    char opt;
     int acc;
-    if (strcmp(argv[1], "-acc") == 0) {
-        acc = 1;
-        strcpy(fileName, argv[2]);
-    } else {
-        acc = 0;
-        strcpy(fileName, argv[1]);
+    strcpy(fileName, argv[1]);
+
+    opt = getopt(argc, argv, "-a");
+    switch(opt) {
+        case 'a':
+            acc = 1;
+            strcpy(fileName, argv[optind++]);
+            break;
+        default:
+            break;
     }
 
     if (access(fileName, F_OK) != 0) {
@@ -25,11 +30,10 @@ int main(int argc, char **argv) {
     }
 
     FILE *file = fopen(fileName, "r");
-    while (buf != EOF) {
+    while ((buf = getc(file)) != EOF) {
         printf("%c", buf);
         if (acc == 1)
             fflush(stdout);
-        buf = getc(file);
     }
     fclose(file);
     return 0;

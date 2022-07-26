@@ -168,6 +168,7 @@ void print_help(void) {
     puts("      [clickcr {x,y,button,screen}]");
     puts("      [move {x,y,screen}]");
     puts("      [move-rel {x,y}]");
+    puts("      [move-smooth {x,y,speed,screen}]");
     puts("      [hold {holdtime,button}]");
     puts("      [drag {ix,iy,tx,ty,speedMS,button,screen}]");
     puts("      [get {x,y,xy,holdtime,pixelcolor}]");
