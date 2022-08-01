@@ -18,7 +18,7 @@ int random_gen(int argc, char **argv) {
     FILE *outfile;
     char table[256];
     char random_char;
-    char *options = "aHnlusohA:m:M:";
+    char *options = "aHnlushAo:m:M:";
     char *output;
     char opt;
     size_t size;
