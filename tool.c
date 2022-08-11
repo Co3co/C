@@ -4,54 +4,54 @@
 #include <unistd.h>
 #include <base64.h> // stole mine from https://nachtimwald.com/2017/11/18/base64-encode-and-decode-in-c/
 
-int random_gen(int argc, char **argv);
+int random_gen(char settings[], unsigned long int length, FILE *outfile);
 int base64(int argc, char **argv);
 int help_check(int argc, char **argv, char *help);
 void print_help(char cmd[]);
 
-int random_gen(int argc, char **argv) {
+int random_gen(char settings[], unsigned long int length, FILE *outfile) {
     const char *number_table = "0123456789";
     const char *lowercase_table = "abcdefghijklmnopqrstuvwxyz";
     const char *uppercase_table = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
     const char *symbol_table = "!@#$%^&*()-=_+[]{}\\|;:'\",.<>/?`~";
 
-    FILE *outfile;
     char table[256];
     char random_char;
-    char *options = "aHnlushAo:m:M:";
-    char *output;
-    char opt;
+    char setting;
     size_t size;
-    unsigned long int length;
     int len;
     int all, hex, num;
     int lower, upper, symbol;
     int acc;
-    int c, i;
+    int s, c, i;
     int min, max;
 
-    output = NULL;
+    s = 0;
     size = 0;
-    length = 0;
+    len = 0;
     all = 0, hex = 0, num = 0;
     lower = 0, upper = 0, symbol = 0;
+    acc = 0;
     min = 0, max = 9;
 
-    while ((opt = getopt(argc, argv, options)) != -1) {
-        switch (opt) {
+    while ((setting = settings[s++]) != '\0') {
+        switch (setting) {
             case 'm':
-                min = atoi(optarg);
+                min = settings[s] - '0';
                 break;
             case 'M':
-                max = atoi(optarg);
+                max = settings[s] - '0';
                 break;
         }
     }
-    optind = 1;
+    if (min > max)
+        return 1;
+    s = 0;
 
     strcpy(table, "");
-    while ((opt = getopt(argc, argv, options)) != -1) {
-        switch(opt) {
+    srand(getpid());
+    while ((setting = settings[s++]) != '\0') {
+        switch(setting) {
             case 'a':
                 if (all == 1)
                     break;
@@ -117,10 +117,6 @@ int random_gen(int argc, char **argv) {
             case 'A':
                 acc = 1;
                 break;
-            case 'o':
-                output = optarg;
-                outfile = fopen(output, "w");
-                break;
             case 'h':
                 print_help("random");
                 return 1;
@@ -128,23 +124,9 @@ int random_gen(int argc, char **argv) {
         }
     }
 
-    if (optind < argc) {
-        while (optind < argc) {
-            if (atoi(argv[optind]) > 0)
-                length = atol(argv[optind++]);
-            else if (strcmp(argv[optind++], "random") != 0) {
-                print_help("random");
-                return 1;
-            }
-        }
-    } else {
-        print_help("random");
-        return 1;
-    }
-
     for (c = 0; c < length; c++) {
         random_char = table[rand() % size];
-        if (output == NULL)
+        if (outfile == NULL)
             printf("%c", random_char);
         else {
             fprintf(outfile, "%c", random_char);
@@ -152,7 +134,7 @@ int random_gen(int argc, char **argv) {
         if (acc == 1)
             fflush(stdout);
     }
-    if (output != NULL)
+    if (outfile != NULL)
         fclose(outfile);
     return 0;
 }
@@ -262,7 +244,9 @@ void print_help(char cmd[]) {
         puts("  -H  hexadecimal");
         puts("          enable hexadecimal characters");
         puts("  -A  accurate");
-        puts("          use `fflush(stdout)`");
+        puts("          output each character when possible (only works when outputting to stdout)");
+        puts("  -o  outfile");
+        puts("          file to output the string to (overwrites the file)");
     }
     else if (strcmp(cmd, "b64") == 0)
         puts("tool b64 e|d [-p] [-i string] [-f infile] [-o outfile]");
@@ -291,13 +275,89 @@ int main(int argc, char **argv) {
             print_help(action);
             return 1;
         }
-        int err;
+        FILE *outfile = NULL;
+        char *options = "aHnlushAo:m:M:";
+        char settings[256];
+        char opt;
+        int success;
+        int length, len;
+        int min, max;
 
-        srand(getpid());
+        length = 0;
+        len = 0;
+        min = 0, max = 9;
 
-        err = random_gen(argc, argv);
-        if (err == 1)
+        while ((opt = getopt(argc, argv, options)) != -1) {
+            switch(opt) {
+                case 'a':
+                    len = strlen(settings);
+                    settings[len] = 'a';
+                    break;
+                case 'H':
+                    len = strlen(settings);
+                    settings[len] = 'H';
+                    break;
+                case 'n':
+                    len = strlen(settings);
+                    settings[len] = 'n';
+                    break;
+                case 'l':
+                    len = strlen(settings);
+                    settings[len] = 'l';
+                    break;
+                case 'u':
+                    len = strlen(settings);
+                    settings[len] = 'u';
+                    break;
+                case 's':
+                    len = strlen(settings);
+                    settings[len] = 's';
+                    break;
+                case 'A':
+                    len = strlen(settings);
+                    settings[len] = 'A';
+                    break;
+                case 'm':
+                    min = optarg[0];
+                    len = strlen(settings);
+                    settings[len] = 'm';
+                    settings[len+1] = min;
+                    break;
+                case 'M':
+                    max = optarg[0];
+                    len = strlen(settings);
+                    settings[len] = 'M';
+                    settings[len+1] = max;
+                    break;
+                case 'o':
+                    outfile = fopen(optarg, "w");
+                    break;
+                case 'h':
+                    print_help(action);
+                    return 1;
+                    break;
+            }
+        }
+
+        if (optind < argc) {
+            while (optind < argc) {
+                if (atoi(argv[optind]) > 0)
+                    length = atol(argv[optind++]);
+                else if (strcmp(argv[optind++], "random") != 0) {
+                    print_help(action);
+                    return 1;
+                }
+            }
+        } else {
+            print_help("action");
             return 1;
+        }
+
+        success = random_gen(settings, length, outfile);
+        if (success == 1) {
+            print_help(action);
+            return 1;
+        }
     }
     else if (strcmp(action, "b64") == 0) {
         if (argc < 4) {
