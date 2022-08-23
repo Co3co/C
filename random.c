@@ -108,7 +108,7 @@ int random_gen(char settings[], unsigned long int length, FILE *outfile) {
 
     for (c = 0; c < length; c++) {
         random_type = rand() % types;
-        random_char = type_array[random_type][rand() % strlen(type_array[random_type])-1];
+        random_char = type_array[random_type][rand() % strlen(type_array[random_type])];
         if (outfile == NULL) {
             printf("%c", random_char);
             if (acc == 1)
@@ -152,7 +152,7 @@ void print_help() {
     puts("  -A  accurate");
     puts("          output each character when possible (only works when outputting to stdout)");
     puts("  -o  outfile");
-    puts("          file to output the string to (overwrites the file)");
+    puts("          write to the specified file (overwrites the content of the file)");
 }
 
 int main(int argc, char **argv) {
