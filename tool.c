@@ -15,24 +15,26 @@ int random_gen(char settings[], unsigned long int length, FILE *outfile) {
     const char *uppercase_table = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
     const char *symbol_table = "!@#$%^&*()-=_+[]{}\\|;:'\",.<>/?`~";
 
-    char table[256];
+    char type_array[6][2048];
+    unsigned char random_type;
     char random_char;
+    char number_table_mm[10];
     char setting;
-    size_t size;
-    int len;
+    int types;
     int all, hex, num;
     int lower, upper, symbol;
-    int acc;
-    int s, c, i;
+    int s, c, m;
     int min, max;
+    int acc;
 
+    types = 0;
     s = 0;
-    size = 0;
-    len = 0;
+    acc = 0;
     all = 0, hex = 0, num = 0;
     lower = 0, upper = 0, symbol = 0;
-    acc = 0;
     min = 0, max = 9;
+
+    srand(getpid());
 
     while ((setting = settings[s++]) != '\0') {
         switch (setting) {
@@ -48,71 +50,53 @@ int random_gen(char settings[], unsigned long int length, FILE *outfile) {
         return 1;
     s = 0;
 
-    strcpy(table, "");
-    srand(getpid());
     while ((setting = settings[s++]) != '\0') {
         switch(setting) {
             case 'a':
                 if (all == 1)
                     break;
                 all = 1;
-                for (i = min; i <= max; i++) {
-                    len = strlen(table);
-                    table[len] = number_table[i];
-                    table[len+1] = '\0';
-                    size = size + sizeof(number_table[i]);
-                }
-                strcat(table, lowercase_table);
-                size = size + strlen(lowercase_table);
-                strcat(table, uppercase_table);
-                size = size + strlen(uppercase_table);
-                strcat(table, symbol_table);
-                size = size + strlen(symbol_table);
+                for (m = min; m <= max; m++)
+                    number_table_mm[strlen(number_table_mm)] = number_table[m];
+                strcpy(type_array[types++], number_table_mm);
+                strcpy(type_array[types++], lowercase_table);
+                strcpy(type_array[types++], uppercase_table);
+                strcpy(type_array[types++], symbol_table);
                 break;
             case 'H':
                 if (all == 1 || hex == 1)
                     break;
                 hex = 1;
-                for (i = min; i <= max; i++) {
-                    len = strlen(table);
-                    table[len] = number_table[i];
-                    table[len+1] = '\0';
-                    size = size + sizeof(number_table[i]);
-                }
-                strcat(table, uppercase_table);
-                size = size + strlen(uppercase_table);
+                for (m = min; m <= max; m++)
+                    number_table_mm[strlen(number_table_mm)] = number_table[m];
+                strcpy(type_array[types++], number_table_mm);
+                strcpy(type_array[types++], uppercase_table);
                 break;
             case 'n':
                 if (all == 1 || hex == 1 || num == 1)
                     break;
                 num = 1;
-                for (i = min; i <= max; i++) {
-                    len = strlen(table);
-                    table[len] = number_table[i];
-                    table[len+1] = '\0';
-                    size = size + sizeof(number_table[i]);
-                }
+                for (m = min; m <= max; m++)
+                    number_table_mm[strlen(number_table_mm)] = number_table[m];
+                strcpy(type_array[types++], number_table_mm);
                 break;
             case 'l':
                 if (all == 1 || lower == 1)
                     break;
                 lower = 1;
-                strcat(table, lowercase_table);
-                size = size + strlen(lowercase_table);
+                strcpy(type_array[types++], lowercase_table);
                 break;
             case 'u':
                 if (all == 1 || hex == 1 || upper == 1)
                     break;
                 upper = 1;
-                strcat(table, uppercase_table);
-                size = size + strlen(uppercase_table);
+                strcpy(type_array[types++], uppercase_table);
                 break;
             case 's':
                 if (all == 1 || symbol == 1)
                     break;
                 symbol = 1;
-                strcat(table, symbol_table);
-                size = size + strlen(symbol_table);
+                strcpy(type_array[types++], symbol_table);
                 break;
             case 'A':
                 acc = 1;
@@ -125,17 +109,15 @@ int random_gen(char settings[], unsigned long int length, FILE *outfile) {
     }
 
     for (c = 0; c < length; c++) {
-        random_char = table[rand() % size];
-        if (outfile == NULL)
+        random_type = rand() % types;
+        random_char = type_array[random_type][rand() % strlen(type_array[random_type])];
+        if (outfile == NULL) {
             printf("%c", random_char);
-        else {
+            if (acc == 1)
+                fflush(stdout);
+        } else
             fprintf(outfile, "%c", random_char);
-        }
-        if (acc == 1)
-            fflush(stdout);
     }
-    if (outfile != NULL)
-        fclose(outfile);
     return 0;
 }
 
