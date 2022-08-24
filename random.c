@@ -12,6 +12,7 @@ int random_gen(char settings[], unsigned long int length, FILE *outfile) {
     const char *lowercase_table = "abcdefghijklmnopqrstuvwxyz";
     const char *uppercase_table = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
     const char *symbol_table = "!@#$%^&*()-=_+[]{}\\|;:'\",.<>/?`~";
+    const char *hex_table = "0123456789abcdef";
 
     char type_array[6][2048];
     unsigned char random_type;
@@ -62,13 +63,10 @@ int random_gen(char settings[], unsigned long int length, FILE *outfile) {
                 strcpy(type_array[types++], symbol_table);
                 break;
             case 'H':
-                if (all == 1 || hex == 1)
+                if (hex == 1)
                     break;
                 hex = 1;
-                for (m = min; m <= max; m++)
-                    number_table_mm[strlen(number_table_mm)] = number_table[m];
-                strcpy(type_array[types++], number_table_mm);
-                strcpy(type_array[types++], uppercase_table);
+                strcpy(type_array[types++], hex_table);
                 break;
             case 'n':
                 if (all == 1 || hex == 1 || num == 1)
