@@ -13,15 +13,16 @@ int random_gen(char settings[], unsigned long int length, FILE *outfile) {
     const char *uppercase_table = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
     const char *symbol_table = "!@#$%^&*()-=_+[]{}\\|;:'\",.<>/?`~";
     const char *hex_table = "0123456789abcdef";
+    const char *base64_table = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 
     char type_array[6][2048];
-    unsigned char random_type;
+    int random_type;
     char random_char;
     char number_table_mm[10];
     char setting;
     int types;
-    int all, hex, num;
-    int lower, upper, symbol;
+    int all, hex, base64;
+    int num, lower, upper, symbol;
     int s, c, m;
     int min, max;
     int acc;
@@ -29,8 +30,8 @@ int random_gen(char settings[], unsigned long int length, FILE *outfile) {
     types = 0;
     s = 0;
     acc = 0;
-    all = 0, hex = 0, num = 0;
-    lower = 0, upper = 0, symbol = 0;
+    all = 0, hex = 0, base64 = 0;
+    num = 0, lower = 0, upper = 0, symbol = 0;
     min = 0, max = 9;
 
     srand(getpid());
@@ -67,6 +68,12 @@ int random_gen(char settings[], unsigned long int length, FILE *outfile) {
                     break;
                 hex = 1;
                 strcpy(type_array[types++], hex_table);
+                break;
+            case 'b':
+                if (base64 == 1)
+                    break;
+                base64 = 1;
+                strcpy(type_array[types++], base64_table);
                 break;
             case 'n':
                 if (all == 1 || hex == 1 || num == 1)
@@ -166,7 +173,7 @@ int main(int argc, char **argv) {
         return 1;
     }
     FILE *outfile = NULL;
-    char *options = "aHnlushAo:m:M:";
+    char *options = "abHnlushAo:m:M:";
     char settings[256];
     char opt;
     int success;
@@ -187,6 +194,10 @@ int main(int argc, char **argv) {
             case 'H':
                 len = strlen(settings);
                 settings[len] = 'H';
+                break;
+            case 'b':
+                len = strlen(settings);
+                settings[len] = 'b';
                 break;
             case 'n':
                 len = strlen(settings);
