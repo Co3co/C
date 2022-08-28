@@ -101,7 +101,7 @@ int help_check(int argc, char **argv) {
 
 void print_help() {
     puts("b64 e|d [-p] [-i string] [-f infile] [-o outfile]");
-    puts("  -i  input (default)");
+    puts("  -i  input");
     puts("          encode/decode the argument string (reads until the end of the command)");
     puts("  -p  prompt");
     puts("          prompts you for the string");
