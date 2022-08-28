@@ -51,8 +51,6 @@ int base64(int argc, char **argv) {
         }
     }
 
-    /* printf("data:\n'%s'\n", data_in); // debug */
-
     if (strcmp(codec, "e") == 0) {
         data_out = b64_encode((const unsigned char *)data_in, strlen(data_in));
         if (output == NULL) {
@@ -64,7 +62,6 @@ int base64(int argc, char **argv) {
             fclose(outfile);
         }
     } else if (strcmp(codec, "d") == 0) {
-        /* data_out_len = b64_decoded_size(data_in)+1; */
         data_out_len = b64_decoded_size(data_in);
         data_out = malloc(data_out_len);
 
