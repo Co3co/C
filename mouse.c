@@ -1,4 +1,3 @@
-#include <unistd.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -8,44 +7,45 @@ xdo_t *xdo;
 charcodemap_t *mods;
 int nmods;
 
-void click(int button);
-void click_cords(int x, int y, int button, int screen);
-void click_cords_return(int x, int y, int button, int screen);
-void move(int x, int y, int screen);
-void move_rel(int x, int y);
-void move_smooth(float tx, float ty, int speedMS, int screen);
+void click(int button, int clearmods);
+void click_coords(int x, int y, int button, int screen, int clearmods);
+void click_coords_return(int x, int y, int button, int screen, int clearmods);
+void move(int x, int y, int screen, int clearmods);
+void move_relevant(int x, int y, int clearmods);
+void move_smooth(float tx, float ty, int speedMS, int screen, int clearmods);
+void hold(int holdTime, int button, int clearmods);
+void drag(float ix, float iy, float tx, float ty, int speedMS, int button, int screen, int clearmods);
 void get_coords(int *x, int *y, int *screen);
-void get_coords_click(int *x, int *y, int *screen);
-void hold(int holdTime, int button);
-void drag(float ix, float iy, float tx, float ty, int speedMS, int button, int screen);
+void get_coords_click(int *x, int *y, int *screen, int clearmods);
 void get_pixel_color(char color[]);
 int get_hold_time(float *holdTime);
+int help_check(int argc, char **argv);
 void print_help(void);
 
-void click(int button) {
-    xdo_get_active_modifiers(xdo, &mods, &nmods);
-    xdo_clear_active_modifiers(xdo, CURRENTWINDOW, mods, nmods);
+void click(int button, int clearmods) {
+    if (clearmods == 1) 
+        xdo_clear_active_modifiers(xdo, CURRENTWINDOW, mods, nmods);
 
     xdo_mouse_down(xdo, CURRENTWINDOW, button);
     xdo_mouse_up(xdo, CURRENTWINDOW, button);
 
-    xdo_set_active_modifiers(xdo, CURRENTWINDOW, mods, nmods);
+    if (clearmods == 1) 
+        xdo_set_active_modifiers(xdo, CURRENTWINDOW, mods, nmods);
 }
-
-void click_cords(int x, int y, int button, int screen) {
-    xdo_get_active_modifiers(xdo, &mods, &nmods);
-    xdo_clear_active_modifiers(xdo, CURRENTWINDOW, mods, nmods);
+void click_coords(int x, int y, int button, int screen, int clearmods) {
+    if (clearmods == 1)
+        xdo_clear_active_modifiers(xdo, CURRENTWINDOW, mods, nmods);
 
     xdo_move_mouse(xdo, x, y, screen);
     xdo_mouse_down(xdo, CURRENTWINDOW, button);
     xdo_mouse_up(xdo, CURRENTWINDOW, button);
 
-    xdo_set_active_modifiers(xdo, CURRENTWINDOW, mods, nmods);
+    if (clearmods == 1)
+        xdo_set_active_modifiers(xdo, CURRENTWINDOW, mods, nmods);
 }
-
-void click_cords_return(int x, int y, int button, int screen) {
-    xdo_get_active_modifiers(xdo, &mods, &nmods);
-    xdo_clear_active_modifiers(xdo, CURRENTWINDOW, mods, nmods);
+void click_coords_return(int x, int y, int button, int screen, int clearmods) {
+    if (clearmods == 1)
+        xdo_clear_active_modifiers(xdo, CURRENTWINDOW, mods, nmods);
 
     int startX, startY, startScreen;
     xdo_get_mouse_location(xdo, &startX, &startY, &startScreen);
@@ -55,18 +55,32 @@ void click_cords_return(int x, int y, int button, int screen) {
     xdo_mouse_up(xdo, CURRENTWINDOW, button);
 
     xdo_move_mouse(xdo, startX, startY, screen);
-    xdo_set_active_modifiers(xdo, CURRENTWINDOW, mods, nmods);
-}
 
-void move(int x, int y, int screen) {
+    if (clearmods == 1)
+        xdo_set_active_modifiers(xdo, CURRENTWINDOW, mods, nmods);
+}
+void move(int x, int y, int screen, int clearmods) {
+    if (clearmods == 1) 
+        xdo_clear_active_modifiers(xdo, CURRENTWINDOW, mods, nmods);
+
     xdo_move_mouse(xdo, x, y, screen);
-}
 
-void move_rel(int x, int y) {
+    if (clearmods == 1) 
+        xdo_set_active_modifiers(xdo, CURRENTWINDOW, mods, nmods);
+}
+void move_relevant(int x, int y, int clearmods) {
+    if (clearmods == 1) 
+        xdo_clear_active_modifiers(xdo, CURRENTWINDOW, mods, nmods);
+
     xdo_move_mouse_relative(xdo, x, y);
-}
 
-void move_smooth(float tx, float ty, int speedMS, int screen) {
+    if (clearmods == 1) 
+        xdo_set_active_modifiers(xdo, CURRENTWINDOW, mods, nmods);
+}
+void move_smooth(float tx, float ty, int speedMS, int screen, int clearmods) {
+    if (clearmods == 1) 
+        xdo_clear_active_modifiers(xdo, CURRENTWINDOW, mods, nmods);
+
     float frac, loop, loops, x, y, posdx, posdy;
     int ix, iy;
     xdo_get_mouse_location(xdo, &ix, &iy, &screen);
@@ -86,13 +100,14 @@ void move_smooth(float tx, float ty, int speedMS, int screen) {
         xdo_move_mouse(xdo, x, y, screen);
         usleep(speedMS*1000);
     }
-}
 
-void get_coords(int *x, int *y, int *screen) {
-    xdo_get_mouse_location(xdo, x, y, screen);
+    if (clearmods == 1) 
+        xdo_set_active_modifiers(xdo, CURRENTWINDOW, mods, nmods);
 }
+void hold(int holdTime, int button, int clearmods) {
+    if (clearmods == 1) 
+        xdo_clear_active_modifiers(xdo, CURRENTWINDOW, mods, nmods);
 
-void hold(int holdTime, int button) {
     if (access("/tmp/presslog", F_OK) != 0) {
         xdo_mouse_down(xdo, CURRENTWINDOW, button);
         usleep(holdTime*1000);
@@ -105,9 +120,14 @@ void hold(int holdTime, int button) {
         usleep(dholdTime*1000);
         xdo_mouse_up(xdo, CURRENTWINDOW, button);
     }
-}
 
-void drag(float ix, float iy, float tx, float ty, int speedMS, int button, int screen) {
+    if (clearmods == 1) 
+        xdo_set_active_modifiers(xdo, CURRENTWINDOW, mods, nmods);
+}
+void drag(float ix, float iy, float tx, float ty, int speedMS, int button, int screen, int clearmods) {
+    if (clearmods == 1) 
+        xdo_clear_active_modifiers(xdo, CURRENTWINDOW, mods, nmods);
+
     float frac, loop, loops, x, y, posdx, posdy;
     float dx = tx - ix, dy = ty - iy;
     if (dx < 0 || dy < 0) {
@@ -128,20 +148,28 @@ void drag(float ix, float iy, float tx, float ty, int speedMS, int button, int s
         usleep(speedMS*1000);
     }
     xdo_mouse_up(xdo, CURRENTWINDOW, button);
-}
 
+    if (clearmods == 1) 
+        xdo_set_active_modifiers(xdo, CURRENTWINDOW, mods, nmods);
+}
+void get_coords(int *x, int *y, int *screen) {
+    xdo_get_mouse_location(xdo, x, y, screen);
+}
+void get_coords_click(int *x, int *y, int *screen, int clearmods) {
+    xdo_get_mouse_location(xdo, x, y, screen);
+}
 void get_pixel_color(char color[]) {
     FILE *cmd = popen("getpixelcolor", "r");
     fgets(color, 256, cmd);
-    fclose(cmd);
+    pclose(cmd);
 }
-
 int get_hold_time(float *holdTime) {
     if (access("/tmp/presslog", F_OK) != 0) {
         return 1;
     } else {
         char buf, repeatRate[24], repeatDelay[24];
         float logLines;
+        logLines = 0;
 
         FILE *file = fopen("/tmp/presslog", "r");
         while ((buf = getc(file)) != EOF)
@@ -151,166 +179,162 @@ int get_hold_time(float *holdTime) {
 
         FILE *frepeatDelay = popen("xset -q | awk NR==9 | awk '{print $4}'", "r");
         fgets(repeatDelay, 24, frepeatDelay);
-        fclose(frepeatDelay);
+        pclose(frepeatDelay);
 
         FILE *frepeatRate = popen("xset -q | awk NR==9 | awk '{print $7}'", "r");
         fgets(repeatRate, 24, frepeatRate);
-        fclose(frepeatRate);
+        pclose(frepeatRate);
 
         *holdTime = logLines / atof(repeatRate) * 1000 + atof(repeatDelay);
         return 0;
     }
 }
-
 void print_help(void) {
-    puts("mouse [click {button}]");
+    puts("mouse [-c] [-r repeats] <action>");
+    puts("      -c clear-modifiers");
+    puts("          clear all active key modifiers before acting");
+    puts("      -r repeat");
+    puts("          repeat the action a specified amount of times");
+    puts("actions:");
+    puts("      [click {button}]");
     puts("      [clickc {x,y,button,screen}]");
     puts("      [clickcr {x,y,button,screen}]");
     puts("      [move {x,y,screen}]");
-    puts("      [move-rel {x,y}]");
-    puts("      [move-smooth {x,y,speed,screen}]");
-    puts("      [hold {holdtime,button}]");
-    puts("      [drag {ix,iy,tx,ty,speedMS,button,screen}]");
-    puts("      [get {x,y,xy,holdtime,pixelcolor}]");
+    puts("      [mover {x,y}]");
+    puts("      [moves {x,y,speed,screen}]");
+    puts("      [hold {time,button}]");
+    puts("      [drag {ix,iy,tx,ty,interval,button,screen}]");
+    puts("      [get {x,y,xy,holdtime,pixelcolor}]\n");
+    exit(1);
 }
-
 
 int main(int argc, char **argv) {
-    if (argc == 1) {
+    if (argc == 1)
         print_help();
-        return 1;
-    }
 
     xdo = xdo_new(NULL);
-    char action[32];
-    strcpy(action, argv[1]);
+    xdo_get_active_modifiers(xdo, &mods, &nmods);
 
-    if (strcmp(action, "click") == 0)
-    {
-        if (argc < 2) {
-            print_help();
-            return 1;
-        }
-        int button = (argc > 2) ? atoi(argv[2]) : 1;
-        click(button);
-    }
+    char *options = "cr:h";
+    char opt;
+    int clearmods = 0;
+    int repeat = 1;
 
-    else if (strcmp(action, "clickc") == 0 || strcmp(action, "clickcr") == 0)
-    {
-        if (argc < 4) {
-            print_help();
-            return 1;
-        }
-        int x = atoi(argv[2]);
-        int y = atoi(argv[3]);
-        int button = (argc > 4) ? atoi(argv[4]) : 1;
-        int screen = (argc > 5) ? atoi(argv[5]) : 0;
-        if (strcmp(action, "clickcr") == 0) {
-            click_cords_return(x, y, button, screen);
-        } else {
-            click_cords(x, y, button, screen);
+    while ((opt = getopt(argc, argv, options)) != -1) {
+        switch(opt) {
+            case 'c':
+                clearmods = 1;
+                break;
+            case 'r':
+                repeat = atoi(optarg);
+                break;
+            case 'h':
+                print_help();
+                break;
         }
     }
 
-    else if (strcmp(action, "hold") == 0) {
-        int holdTime = (argc > 2) ? atoi(argv[2]) : 0;
-        int button = (argc > 3) ? atoi(argv[3]) : 1;
-        hold(holdTime, button);
-    }
-
-    else if (strcmp(action, "drag") == 0) {
-        if (argc < 5) {
-            print_help();
-            return 1;
-        }
-        int initalX = atoi(argv[2]);
-        int initalY = atoi(argv[3]);
-        int targetX = atoi(argv[4]);
-        int targetY = atoi(argv[5]);
-        int speedMS = (argc > 6) ? atoi(argv[6]) : 1;
-        int button = (argc > 7) ? atoi(argv[7]) : 1;
-        int screen = (argc > 8) ? atoi(argv[8]) : 0;
-        drag(initalX, initalY, targetX, targetY, speedMS, button, screen);
-    }
-
-    else if (strcmp(action, "move") == 0)
-    {
-        if (argc != 4) {
-            print_help();
-            return 1;
-        }
-        int x = atoi(argv[2]);
-        int y = atoi(argv[3]);
-        int screen = (argc > 4) ? atoi(argv[4]) : 0;
-        move(x, y, screen);
-    }
-
-    else if (strcmp(action, "move-rel") == 0)
-    {
-        if (argc != 4) {
-            print_help();
-            return 1;
-        }
-        int x = atoi(argv[2]);
-        int y = atoi(argv[3]);
-        move_rel(x, y);
-    }
-
-    else if (strcmp(action, "move-smooth") == 0)
-    {
-        if (argc < 3) {
-            print_help();
-            return 1;
-        }
-
-        int x = atoi(argv[2]);
-        int y = atoi(argv[3]);
-        int speedMS = (argc > 4) ? atoi(argv[4]) : 1;
-        int screen = (argc > 5) ? atoi(argv[5]) : 0;
-        move_smooth(x, y, speedMS, screen);
-    }
-
-    else if (strcmp(action, "get") == 0)
-    {
-        if (argc != 3) {
-            print_help();
-            return 1;
-        }
-
-        int x, y, screen;
-        get_coords(&x, &y, &screen);
-
-        if (strcmp(argv[2], "x") == 0) {
-            printf("%d", x);
-        } else if (strcmp(argv[2], "y") == 0) {
-            printf("%d", y);
-        } else if (strcmp(argv[2], "xy") == 0) {
-            printf("%d %d", x, y);
-        } else if (strcmp(argv[2], "holdtime") == 0) {
-            float holdTime;
-            int success;
-            success = get_hold_time(&holdTime);
-            if (success != 0) {
-                puts("'/tmp/presslog' does not exist.");
-                return 1;
-            } else {
-                printf("%.0f", holdTime);
-            }
-        } else if (strcmp(argv[2], "pixelcolor") == 0) {
-            char color[50];
-            get_pixel_color(color);
-            printf("%s", color);
-        } else {
-            print_help();
-            return 1;
-        }
-    }
-
-    else {
+    char actions[argc-optind][256];
+    if (optind < argc)
+        for (int a = 0; optind < argc; a++, optind++)
+            strcpy(actions[a], argv[optind]);
+    else
         print_help();
-        return 1;
+
+    int actionsc = sizeof(actions) / sizeof(actions[0]);
+    
+    for (int r = 0; r < repeat; r++) {
+        if (strcmp(actions[0], "click") == 0)
+        {
+            int button = (actionsc > 1) ? atoi(actions[1]) : 1;
+
+            click(button, clearmods);
+        }
+        else if (strcmp(actions[0], "clickc") == 0 || strcmp(actions[0], "clickcr") == 0)
+        {
+            if (actionsc < 3)
+                print_help();
+
+            int x = atoi(actions[1]);
+            int y = atoi(actions[2]);
+            int button = (actionsc > 3) ? atoi(actions[3]) : 1;
+            int screen = (actionsc > 4) ? atoi(actions[4]) : 0;
+
+            if (strcmp(actions[0], "clickcr") == 0)
+                click_coords_return(x, y, button, screen, clearmods);
+            else
+                click_coords(x, y, button, screen, clearmods);
+        }
+        else if (strcmp(actions[0], "hold") == 0)
+        {
+            int holdTime = (actionsc > 1) ? atoi(actions[1]) : 0;
+            int button = (actionsc > 2) ? atoi(actions[2]) : 1;
+
+            hold(holdTime, button, clearmods);
+        }
+        else if (strcmp(actions[0], "drag") == 0)
+        {
+            int initalX = atoi(actions[1]);
+            int initalY = atoi(actions[2]);
+            int targetX = atoi(actions[3]);
+            int targetY = atoi(actions[4]);
+            int speedMS = (actionsc > 5) ? atoi(actions[5]) : 1;
+            int button = (actionsc > 6) ? atoi(actions[6]) : 1;
+            int screen = (actionsc > 7) ? atoi(actions[7]) : 0;
+
+            drag(initalX, initalY, targetX, targetY, speedMS, button, screen, clearmods);
+        }
+        else if (strcmp(actions[0], "move") == 0 || strcmp(actions[0], "mover") == 0 || strcmp(actions[0], "moves") == 0)
+        {
+            if (actionsc < 3)
+                print_help();
+
+            int x, y, screen, speedMS;
+            x = atoi(actions[1]);
+            y = atoi(actions[2]);
+
+            screen = (actionsc > 3 && (strcmp(actions[0], "move") == 0 || strcmp(actions[0], "mover") == 0)) ? atoi(actions[3]) : 0;
+            speedMS = (actionsc > 3 && strcmp(actions[0], "moves") == 0) ? atoi(actions[3]) : 1;
+            screen = (actionsc > 4 && strcmp(actions[0], "moves") == 0) ? atoi(actions[4]) : 0;
+
+            printf("%d %d\n", speedMS, screen);
+            if (strcmp(actions[0], "move") == 0)
+                move(x, y, screen, clearmods);
+            else if (strcmp(actions[0], "mover") == 0)
+                move_relevant(x, y, clearmods);
+            else
+                move_smooth(x, y, speedMS, screen, clearmods);
+        }
+        else if (strcmp(actions[0], "get") == 0)
+        {
+            int x, y, screen;
+            get_coords(&x, &y, &screen);
+
+            if (strcmp(actions[1], "x") == 0)
+                printf("%d", x);
+            else if (strcmp(actions[1], "y") == 0)
+                printf("%d", y);
+            else if (strcmp(actions[1], "xy") == 0)
+                printf("%d %d", x, y);
+            else if (strcmp(actions[1], "ht") == 0 || strcmp(actions[1], "holdtime") == 0) {
+                float holdTime;
+                int success;
+                success = get_hold_time(&holdTime);
+                if (success != 0) {
+                    puts("'/tmp/presslog' does not exist.");
+                    return 1;
+                } else
+                    printf("%.0f", holdTime);
+            } else if (strcmp(actions[1], "pc") == 0 || strcmp(actions[1], "pixelcolor") == 0) {
+                char color[50];
+                get_pixel_color(color);
+                printf("%s", color);
+            } else
+                print_help();
+        }
+        else
+            print_help();
     }
 
-    xdo_free(xdo);
+    return 0;
 }
-
