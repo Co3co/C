@@ -18,7 +18,7 @@ int random_gen(char settings[], unsigned long int length, FILE *outfile) {
     char type_array[6][2048];
     int random_type;
     char random_char;
-    char number_table_mm[10];
+    char *number_table_mm = malloc(10);
     char setting;
     int types;
     int all, hex, base64;
